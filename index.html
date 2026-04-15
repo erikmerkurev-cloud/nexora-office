@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXORA — AI Office</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #050508; --surface: #0c0c12; --surface2: #12121a;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --text: #f0f0f8; --muted: #5a5a72;
+  --accent: #7B6EF6; --accent2: #A594FF; --accent-glow: rgba(123,110,246,0.25);
+  --green: #34D399; --orange: #FB923C; --pink: #F472B6; --blue: #38BDF8;
+  --agent-video: #F472B6; --agent-smm: #38BDF8; --agent-seo: #34D399; --agent-copy: #FB923C;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; width: 600px; height: 600px; background: radial-gradient(circle, rgba(123,110,246,0.08) 0%, transparent 70%); top: -100px; left: -100px; pointer-events: none; z-index: 0; }
+
+.app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+/* SIDEBAR */
+.sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; }
+.logo-area { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+.logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #7B6EF6, #A594FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.logo-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
+.nav { padding: 16px 12px; flex: 1; }
+.nav-section-title { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; padding: 0 8px; margin-bottom: 8px; margin-top: 16px; }
+.nav-section-title:first-child { margin-top: 0; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); transition: all 0.2s; margin-bottom: 2px; border: 1px solid transparent; }
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--accent2); background: rgba(123,110,246,0.12); border-color: rgba(123,110,246,0.2); }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 9px; font-family: 'DM Mono', monospace; padding: 2px 6px; border-radius: 10px; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+.user-card { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--pink)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.user-name { font-size: 12px; font-weight: 700; }
+.user-role { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+/* MAIN */
+.main { flex: 1; overflow-y: auto; }
+.topbar { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(5,5,8,0.8); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+.page-title { font-size: 18px; font-weight: 800; }
+.page-sub { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 1px; }
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+.btn { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); box-shadow: 0 0 20px var(--accent-glow); }
+.btn-ghost { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+
+.content { padding: 28px 32px; }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; animation: fadeInUp 0.4s ease both; }
+.stat-card:nth-child(1){animation-delay:.05s} .stat-card:nth-child(2){animation-delay:.1s} .stat-card:nth-child(3){animation-delay:.15s} .stat-card:nth-child(4){animation-delay:.2s}
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 12px 12px 0 0; }
+.stat-card.c1::before{background:var(--accent)} .stat-card.c2::before{background:var(--green)} .stat-card.c3::before{background:var(--orange)} .stat-card.c4::before{background:var(--pink)}
+.stat-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px; }
+.stat-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+.stat-delta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--green); margin-top: 4px; }
+
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 15px; font-weight: 800; }
+.section-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* AGENTS */
+.agents-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 28px; }
+.agent-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; animation: fadeInUp 0.4s ease both; }
+.agent-card:nth-child(1){animation-delay:.2s} .agent-card:nth-child(2){animation-delay:.28s} .agent-card:nth-child(3){animation-delay:.36s} .agent-card:nth-child(4){animation-delay:.44s}
+.agent-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+.agent-card.video{border-top:2px solid var(--agent-video)} .agent-card.smm{border-top:2px solid var(--agent-smm)} .agent-card.seo{border-top:2px solid var(--agent-seo)} .agent-card.copy{border-top:2px solid var(--agent-copy)}
+.agent-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.agent-avatar { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.agent-card.video .agent-avatar{background:rgba(244,114,182,0.15)} .agent-card.smm .agent-avatar{background:rgba(56,189,248,0.15)} .agent-card.seo .agent-avatar{background:rgba(52,211,153,0.15)} .agent-card.copy .agent-avatar{background:rgba(251,146,60,0.15)}
+.agent-status { font-family: 'DM Mono', monospace; font-size: 9px; padding: 4px 10px; border-radius: 20px; letter-spacing: 1px; }
+.status-active{background:rgba(52,211,153,0.12);color:var(--green);border:1px solid rgba(52,211,153,0.2)} .status-idle{background:rgba(90,90,114,0.15);color:var(--muted);border:1px solid var(--border)} .status-busy{background:rgba(251,146,60,0.12);color:var(--orange);border:1px solid rgba(251,146,60,0.2)}
+.agent-name { font-size: 16px; font-weight: 800; margin-bottom: 3px; }
+.agent-role { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-bottom: 14px; }
+.agent-desc { font-size: 12px; color: #8888a0; line-height: 1.6; margin-bottom: 16px; }
+.agent-skills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.skill-tag { font-family: 'DM Mono', monospace; font-size: 9px; padding: 3px 8px; border-radius: 4px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.agent-stats { display: flex; gap: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.agent-stat .label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-bottom: 3px; }
+.agent-stat .value { font-size: 14px; font-weight: 800; }
+.agent-action { margin-top: 14px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+.agent-card.video .agent-action:hover{background:rgba(244,114,182,0.1);border-color:var(--agent-video);color:var(--agent-video)} .agent-card.smm .agent-action:hover{background:rgba(56,189,248,0.1);border-color:var(--agent-smm);color:var(--agent-smm)} .agent-card.seo .agent-action:hover{background:rgba(52,211,153,0.1);border-color:var(--agent-seo);color:var(--agent-seo)} .agent-card.copy .agent-action:hover{background:rgba(251,146,60,0.1);border-color:var(--agent-copy);color:var(--agent-copy)}
+
+/* BOTTOM */
+.bottom-row { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+.activity-card, .quick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.card-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 13px; font-weight: 800; }
+.activity-item { display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; cursor: pointer; }
+.activity-item:hover{background:var(--surface2)} .activity-item:last-child{border-bottom:none}
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.activity-body { flex: 1; }
+.activity-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.activity-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+.activity-time { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+
+/* QUICK TASK */
+.task-form { padding: 16px 20px; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; margin-bottom: 8px; display: block; }
+.form-select, .form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 12px; padding: 10px 12px; outline: none; transition: border-color 0.2s; resize: none; }
+.form-select:focus, .form-textarea:focus{border-color:var(--accent)} .form-select option{background:var(--surface2)}
+.form-textarea { height: 90px; line-height: 1.6; }
+.btn-run { width: 100%; background: linear-gradient(135deg, var(--accent), #9B8AFF); color: #fff; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; padding: 12px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.btn-run:hover{box-shadow:0 0 30px var(--accent-glow);transform:translateY(-1px)}
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open{display:flex}
+.modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; width: 100%; max-width: 680px; max-height: 85vh; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 800; }
+.modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.modal-close:hover{color:var(--text);border-color:var(--border2)}
+.modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+
+/* OUTPUT */
+.output-text { font-size: 13px; line-height: 1.9; color: #c8c8e0; white-space: pre-wrap; font-family: 'DM Mono', monospace; }
+.thinking-indicator { display: flex; align-items: center; gap: 10px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; padding: 30px 0; }
+.dots span { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin: 0 2px; animation: bounce 1.2s infinite; }
+.dots span:nth-child(2){animation-delay:.2s} .dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+
+/* ERROR BOX */
+.error-box { background: rgba(255,59,92,0.08); border: 1px solid rgba(255,59,92,0.2); border-radius: 10px; padding: 16px; font-family: 'DM Mono', monospace; font-size: 11px; color: #ff6b6b; line-height: 1.6; }
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:900px){.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}.agents-grid{grid-template-columns:1fr}.bottom-row{grid-template-columns:1fr}.content{padding:20px 16px}.topbar{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo">NEXORA</div>
+      <div class="logo-sub">AI CONTENT OFFICE</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section-title">ГЛАВНОЕ</div>
+      <div class="nav-item active" onclick="setNav(this)"><span class="nav-icon">⬡</span> Дашборд</div>
+      <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">◈</span> Агенты <span class="nav-badge">4</span></div>
+      <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">◎</span> Проекты</div>
+      <div class="nav-section-title">АГЕНТЫ</div>
+      <div class="nav-item" onclick="openAgentModal('video');setNav(this)"><span class="nav-icon" style="color:var(--agent-video)">▶</span> Nova — Video</div>
+      <div class="nav-item" onclick="openAgentModal('smm');setNav(this)"><span class="nav-icon" style="color:var(--agent-smm)">◉</span> Aria — SMM</div>
+      <div class="nav-item" onclick="openAgentModal('seo');setNav(this)"><span class="nav-icon" style="color:var(--agent-seo)">◈</span> Kron — SEO</div>
+      <div class="nav-item" onclick="openAgentModal('copy');setNav(this)"><span class="nav-icon" style="color:var(--agent-copy)">✦</span> Lyra — Copy</div>
+      <div class="nav-section-title">АККАУНТ</div>
+      <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">⊙</span> Настройки</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">M</div>
+        <div><div class="user-name">Marko</div><div class="user-role">OWNER · PRO</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">NEXORA AI Office 👋</div>
+        <div class="page-sub" id="topbarDate">4 АГЕНТА ГОТОВЫ К РАБОТЕ</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost">📊 Отчёт</button>
+        <button class="btn btn-primary" onclick="document.getElementById('quickTask').focus()">+ Новая задача</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="stats-row">
+        <div class="stat-card c1"><div class="stat-label">ЗАДАЧ ВЫПОЛНЕНО</div><div class="stat-value">248</div><div class="stat-delta">↑ +12 сегодня</div></div>
+        <div class="stat-card c2"><div class="stat-label">КОНТЕНТА СОЗДАНО</div><div class="stat-value">3.4K</div><div class="stat-delta">↑ +89 за неделю</div></div>
+        <div class="stat-card c3"><div class="stat-label">АКТИВНЫХ ПРОЕКТОВ</div><div class="stat-value">7</div><div class="stat-delta">↑ 2 новых</div></div>
+        <div class="stat-card c4"><div class="stat-label">ЧАСОВ СЭКОНОМЛЕНО</div><div class="stat-value">512</div><div class="stat-delta">↑ AI эффективность</div></div>
+      </div>
+
+      <div class="section-header">
+        <div><div class="section-title">Команда AI агентов</div><div class="section-sub">Нажми на агента → поставь задачу → получи результат</div></div>
+      </div>
+
+      <div class="agents-grid">
+        <div class="agent-card video" onclick="openAgentModal('video')">
+          <div class="agent-head"><div class="agent-avatar">🎬</div><div class="agent-status status-active">● АКТИВЕН</div></div>
+          <div class="agent-name">NOVA</div><div class="agent-role">VIDEO & SCENARIO AGENT</div>
+          <div class="agent-desc">Пишет сценарии для YouTube, Reels, TikTok. Создаёт раскадровки, хуки, CTA и структуру монтажа.</div>
+          <div class="agent-skills"><span class="skill-tag">СЦЕНАРИИ</span><span class="skill-tag">РАСКАДРОВКА</span><span class="skill-tag">ХУКИ</span><span class="skill-tag">YouTube</span><span class="skill-tag">TikTok</span></div>
+          <div class="agent-stats">
+            <div class="agent-stat"><div class="label">СЦЕНАРИЕВ</div><div class="value" style="color:var(--agent-video)">84</div></div>
+            <div class="agent-stat"><div class="label">ПРОСМОТРЫ</div><div class="value">1.2M</div></div>
+            <div class="agent-stat"><div class="label">РЕЙТИНГ</div><div class="value">4.9★</div></div>
+          </div>
+          <button class="agent-action">▶ Поставить задачу</button>
+        </div>
+
+        <div class="agent-card smm" onclick="openAgentModal('smm')">
+          <div class="agent-head"><div class="agent-avatar">📱</div><div class="agent-status status-busy">◉ ЗАНЯТ</div></div>
+          <div class="agent-name">ARIA</div><div class="agent-role">SMM & SOCIAL MEDIA AGENT</div>
+          <div class="agent-desc">Создаёт контент-планы, посты, сторис и подписи для Instagram, TikTok, Telegram и LinkedIn.</div>
+          <div class="agent-skills"><span class="skill-tag">КОНТЕНТ-ПЛАН</span><span class="skill-tag">ПОСТЫ</span><span class="skill-tag">СТОРИС</span><span class="skill-tag">Instagram</span><span class="skill-tag">Telegram</span></div>
+          <div class="agent-stats">
+            <div class="agent-stat"><div class="label">ПОСТОВ</div><div class="value" style="color:var(--agent-smm)">312</div></div>
+            <div class="agent-stat"><div class="label">ОХВАТ</div><div class="value">890K</div></div>
+            <div class="agent-stat"><div class="label">ER</div><div class="value">6.4%</div></div>
+          </div>
+          <button class="agent-action">◉ Поставить задачу</button>
+        </div>
+
+        <div class="agent-card seo" onclick="openAgentModal('seo')">
+          <div class="agent-head"><div class="agent-avatar">🔍</div><div class="agent-status status-active">● АКТИВЕН</div></div>
+          <div class="agent-name">KRON</div><div class="agent-role">SEO & MARKETING AGENT</div>
+          <div class="agent-desc">Анализирует ключевые слова, пишет SEO-статьи, создаёт мета-теги и маркетинговые стратегии.</div>
+          <div class="agent-skills"><span class="skill-tag">КЛЮЧЕВЫЕ СЛОВА</span><span class="skill-tag">SEO-СТАТЬИ</span><span class="skill-tag">МЕТА-ТЕГИ</span><span class="skill-tag">СТРАТЕГИЯ</span></div>
+          <div class="agent-stats">
+            <div class="agent-stat"><div class="label">СТАТЕЙ</div><div class="value" style="color:var(--agent-seo)">156</div></div>
+            <div class="agent-stat"><div class="label">В ТОП-10</div><div class="value">43</div></div>
+            <div class="agent-stat"><div class="label">ТРАФИК</div><div class="value">↑82%</div></div>
+          </div>
+          <button class="agent-action">◈ Поставить задачу</button>
+        </div>
+
+        <div class="agent-card copy" onclick="openAgentModal('copy')">
+          <div class="agent-head"><div class="agent-avatar">✍️</div><div class="agent-status status-idle">○ СВОБОДЕН</div></div>
+          <div class="agent-name">LYRA</div><div class="agent-role">COPYWRITING AGENT</div>
+          <div class="agent-desc">Пишет продающие тексты, email-рассылки, лендинги, рекламные объявления и бренд-голос.</div>
+          <div class="agent-skills"><span class="skill-tag">ЛЕНДИНГИ</span><span class="skill-tag">EMAIL</span><span class="skill-tag">РЕКЛАМА</span><span class="skill-tag">БРЕНД-ГОЛОС</span></div>
+          <div class="agent-stats">
+            <div class="agent-stat"><div class="label">ТЕКСТОВ</div><div class="value" style="color:var(--agent-copy)">201</div></div>
+            <div class="agent-stat"><div class="label">КОНВЕРСИЯ</div><div class="value">↑34%</div></div>
+            <div class="agent-stat"><div class="label">КЛИЕНТОВ</div><div class="value">28</div></div>
+          </div>
+          <button class="agent-action">✦ Поставить задачу</button>
+        </div>
+      </div>
+
+      <div class="bottom-row">
+        <div class="activity-card">
+          <div class="card-header"><div class="card-title">Последняя активность</div><button class="btn btn-ghost" style="font-size:11px;padding:5px 12px">Все →</button></div>
+          <div id="activityList">
+            <div class="activity-item"><div class="activity-dot" style="background:var(--agent-video)"></div><div class="activity-body"><div class="activity-title">NOVA написала сценарий для YouTube</div><div class="activity-meta">Тема: «5 трендов AI в 2026» · 1200 слов</div></div><div class="activity-time">2 мин</div></div>
+            <div class="activity-item"><div class="activity-dot" style="background:var(--agent-smm)"></div><div class="activity-body"><div class="activity-title">ARIA создала контент-план на месяц</div><div class="activity-meta">Instagram · 30 постов · 12 сторис</div></div><div class="activity-time">18 мин</div></div>
+            <div class="activity-item"><div class="activity-dot" style="background:var(--agent-seo)"></div><div class="activity-body"><div class="activity-title">KRON оптимизировал 5 страниц сайта</div><div class="activity-meta">Мета-теги · заголовки · alt-тексты</div></div><div class="activity-time">1 ч</div></div>
+            <div class="activity-item"><div class="activity-dot" style="background:var(--agent-copy)"></div><div class="activity-body"><div class="activity-title">LYRA написала email-последовательность</div><div class="activity-meta">7 писем · воронка продаж</div></div><div class="activity-time">3 ч</div></div>
+          </div>
+        </div>
+
+        <div class="quick-card">
+          <div class="card-header"><div class="card-title">⚡ Быстрая задача</div></div>
+          <div class="task-form">
+            <div class="form-group">
+              <label class="form-label">АГЕНТ</label>
+              <select class="form-select" id="quickAgent">
+                <option value="video">🎬 NOVA — Video & Scenario</option>
+                <option value="smm">📱 ARIA — SMM & Social</option>
+                <option value="seo">🔍 KRON — SEO & Marketing</option>
+                <option value="copy">✍️ LYRA — Copywriting</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ЗАДАЧА</label>
+              <textarea class="form-textarea" id="quickTask" placeholder="Напиши задачу для агента...&#10;&#10;Например: напиши 5 постов для Instagram про AI маркетинг"></textarea>
+            </div>
+            <button class="btn-run" onclick="runQuickTask()">⚡ ЗАПУСТИТЬ АГЕНТА</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Агент</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px" id="modalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalDirect()">Закрыть</button>
+      <button class="btn btn-primary" id="copyBtn" onclick="copyOutput()">📋 Скопировать</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ВАЖНО: после деплоя на Vercel замени на свой домен ──
+// Например: const API_URL = 'https://nexora-office.vercel.app/api/chat';
+const API_URL = '/api/chat';
+
+const AGENTS = {
+  video: {
+    name: 'NOVA', role: 'VIDEO & SCENARIO AGENT', emoji: '🎬', color: 'var(--agent-video)',
+    system: `Ты NOVA — профессиональный AI агент по созданию видео-контента компании NEXORA. 
+Специализируешься на сценариях для YouTube, TikTok, Instagram Reels.
+Структурируй ответ чётко: ХУКИ → ОСНОВНАЯ ЧАСТЬ → CTA.
+Пиши живо, вовлекающе, с конкретными деталями. Язык: русский.`,
+    defaultTask: 'Напиши цепляющий сценарий для YouTube видео на тему «Как AI меняет маркетинг в 2026 году». Длительность: 5-7 минут.'
+  },
+  smm: {
+    name: 'ARIA', role: 'SMM & SOCIAL MEDIA AGENT', emoji: '📱', color: 'var(--agent-smm)',
+    system: `Ты ARIA — AI агент по SMM компании NEXORA.
+Создаёшь контент-планы, посты, подписи, хэштеги для Instagram, TikTok, Telegram, LinkedIn.
+Пиши живо и вовлекающе. Используй эмодзи уместно. Язык: русский.`,
+    defaultTask: 'Создай контент-план на неделю для Instagram аккаунта AI маркетинговой компании NEXORA. 5 постов с темами, подписями и хэштегами.'
+  },
+  seo: {
+    name: 'KRON', role: 'SEO & MARKETING AGENT', emoji: '🔍', color: 'var(--agent-seo)',
+    system: `Ты KRON — AI агент по SEO и маркетингу компании NEXORA.
+Анализируешь ключевые слова, пишешь SEO-тексты, создаёшь стратегии продвижения.
+Отвечай структурированно, с конкретными данными. Язык: русский.`,
+    defaultTask: 'Создай SEO-стратегию для сайта AI маркетинговой компании. Включи: топ-15 ключевых слов, структуру сайта, приоритеты на первый месяц.'
+  },
+  copy: {
+    name: 'LYRA', role: 'COPYWRITING AGENT', emoji: '✍️', color: 'var(--agent-copy)',
+    system: `Ты LYRA — AI агент по копирайтингу компании NEXORA.
+Пишешь продающие тексты, лендинги, email-цепочки, рекламные объявления.
+Используй психологию продаж, структуры AIDA/PAS. Язык: русский.`,
+    defaultTask: 'Напиши продающий текст для главной страницы сайта NEXORA — AI агентства по контенту и маркетингу. Включи: заголовок, боли клиента, решение, социальные доказательства и CTA.'
+  }
+};
+
+let lastOutput = '';
+
+function setNav(el) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Дата
+const d = new Date();
+document.getElementById('topbarDate').textContent =
+  d.toLocaleDateString('ru-RU', {weekday:'long', day:'numeric', month:'long'}).toUpperCase() + ' · 4 АГЕНТА ГОТОВЫ';
+
+async function openAgentModal(type) {
+  const agent = AGENTS[type];
+  document.getElementById('modalTitle').textContent = agent.emoji + ' ' + agent.name;
+  document.getElementById('modalSub').textContent = agent.role;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px">ЗАДАЧА</label>
+      <textarea id="modalTask" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;padding:12px;outline:none;resize:vertical;min-height:110px;line-height:1.6">${agent.defaultTask}</textarea>
+    </div>
+    <button onclick="runModalTask('${type}')" style="width:100%;background:linear-gradient(135deg,var(--accent),#9B8AFF);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;padding:12px;border:none;border-radius:8px;cursor:pointer;margin-bottom:20px;letter-spacing:.5px">
+      ⚡ ЗАПУСТИТЬ ${agent.name}
+    </button>
+    <div id="modalOutput"></div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+async function runModalTask(type) {
+  const task = document.getElementById('modalTask')?.value?.trim();
+  if (!task) return;
+  await callAgent(type, task, 'modalOutput');
+}
+
+async function runQuickTask() {
+  const type = document.getElementById('quickAgent').value;
+  const task = document.getElementById('quickTask').value.trim();
+  if (!task) { alert('Введи задачу для агента!'); return; }
+  const agent = AGENTS[type];
+  document.getElementById('modalTitle').textContent = agent.emoji + ' ' + agent.name;
+  document.getElementById('modalSub').textContent = agent.role;
+  document.getElementById('modalBody').innerHTML = '<div id="modalOutput"></div>';
+  document.getElementById('modalOverlay').classList.add('open');
+  await callAgent(type, task, 'modalOutput');
+}
+
+async function callAgent(type, task, outputId) {
+  const agent = AGENTS[type];
+  const el = document.getElementById(outputId);
+  el.innerHTML = `<div class="thinking-indicator"><div class="dots"><span></span><span></span><span></span></div>${agent.name} работает над задачей...</div>`;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: agent.system, message: task })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      el.innerHTML = `<div class="error-box">❌ Ошибка агента: ${data.error || 'Неизвестная ошибка'}<br><br>Проверь что API ключ правильно добавлен в Vercel → Settings → Environment Variables → ANTHROPIC_API_KEY</div>`;
+      return;
+    }
+
+    lastOutput = data.text || '';
+
+    // Добавляем в активность
+    addActivity(agent, task.substring(0, 60) + (task.length > 60 ? '...' : ''));
+
+    el.innerHTML = `
+      <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:16px">
+        <span style="color:${agent.color}">${agent.emoji}</span> ${agent.name} · ЗАДАЧА ВЫПОЛНЕНА ✓
+      </div>
+      <div class="output-text">${escapeHtml(lastOutput)}</div>
+    `;
+  } catch(e) {
+    el.innerHTML = `<div class="error-box">❌ Нет соединения с сервером.<br><br>Убедись что ты открыл файл через Vercel (не напрямую из папки). Инструкция в файле README.txt</div>`;
+  }
+}
+
+function addActivity(agent, taskPreview) {
+  const list = document.getElementById('activityList');
+  const item = document.createElement('div');
+  item.className = 'activity-item';
+  item.style.animation = 'fadeInUp .3s ease';
+  item.innerHTML = `
+    <div class="activity-dot" style="background:${agent.color}"></div>
+    <div class="activity-body">
+      <div class="activity-title">${agent.name} выполнил(а) задачу</div>
+      <div class="activity-meta">${taskPreview}</div>
+    </div>
+    <div class="activity-time">только что</div>
+  `;
+  list.insertBefore(item, list.firstChild);
+}
+
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function closeModal(e) { if (e.target.id === 'modalOverlay') closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function copyOutput() {
+  if (!lastOutput) return;
+  navigator.clipboard.writeText(lastOutput).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Скопировано!';
+    setTimeout(() => btn.textContent = '📋 Скопировать', 2000);
+  });
+}
+</script>
+</body>
+</html>
